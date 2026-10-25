@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Theo Dõi Lỗi Giáo Viên - MNTT Sắc Màu</title>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --gray-bg: #f8fafc;
+            --card-border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding-bottom: 40px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a8a, var(--primary));
+            color: white;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        header h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 0.8rem;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 10px 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 62px;
+            z-index: 40;
+        }
+
+        select, input[type="text"], input[type="number"] {
+            padding: 8px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .search-input {
+            flex: 1;
+        }
+
+        .container {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Thẻ tổng kết */
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .summary-card .title {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .summary-card .number {
+            font-size: 1.4rem;
+            color: var(--danger);
+            font-weight: 800;
+        }
+
+        /* Danh sách giáo viên theo dạng Card điện thoại */
+        .teacher-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .teacher-header {
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .teacher-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-total {
+            background: #fee2e2;
+            color: var(--danger);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* Lưới ngày cuộn ngang */
+        .days-scroll {
+            display: flex;
+            gap: 6px;
+            padding: 10px 15px;
+            overflow-x: auto;
+            background: var(--gray-bg);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .day-chip {
+            min-width: 44px;
+            height: 48px;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .day-chip .d-num {
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .day-chip .d-val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .day-chip.has-error {
+            background: #fee2e2;
+            border-color: #fca5a5;
+        }
+
+        .day-chip.has-error .d-val {
+            color: var(--danger);
+        }
+
+        .day-chip.sunday {
+            background: #fef9c3;
+        }
+
+        /* Nút công cụ */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: #e2e8f0; color: #334155; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        /* Khung xem 19 lỗi ở phía dưới cho các cô nắm */
+        .rule-notice-box {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-top: 15px;
+        }
+
+        .rule-notice-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .rule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rule-item {
+            font-size: 0.88rem;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .rule-badge {
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            font-size: 0.75rem;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* Hộp thoại Popup Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 100;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal-sheet {
+            background: white;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 16px 16px 0 0;
+            padding: 16px 18px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            animation: slideUp 0.2s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 8px;
+        }
+
+        .sheet-header h3 {
+            font-size: 1.05rem;
+            color: var(--primary);
+        }
+
+        .error-scroll-list {
+            overflow-y: auto;
+            max-height: 55vh;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .error-check-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .error-check-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sheet-footer {
+            display: flex;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .manage-error-item {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .manage-error-item input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>THEO DÕI LỖI GIÁO VIÊN</h1>
+        <p>MNTT Sắc Màu • Bấm vào ô ngày để đánh dấu lỗi</p>
+    </header>
+
+    <div class="filter-bar">
+        <select id="select-month" onchange="renderApp()">
+            <option value="1">Tháng 1</option><option value="2">Tháng 2</option>
+            <option value="3">Tháng 3</option><option value="4">Tháng 4</option>
+            <option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+            <option value="7">Tháng 7</option><option value="8">Tháng 8</option>
+            <option value="9">Tháng 9</option><option value="10">Tháng 10</option>
+            <option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+        </select>
+        <input type="number" id="select-year" style="width: 75px;" value="2026" onchange="renderApp()">
+        <input type="text" id="search-box" class="search-input" placeholder="Tìm tên cô..." oninput="renderApp()">
+    </div>
+
+    <div class="container">
+        <!-- Tổng lỗi toàn trường -->
+        <div class="summary-card">
+            <div>
+                <div class="title">TỔNG SỐ LỖI TOÀN TRƯỜNG</div>
+                <div style="font-size: 0.8rem; color: var(--text-sub);">Trong tháng đang xem</div>
+            </div>
+            <div class="number" id="school-total-badge">0</div>
+        </div>
+
+        <!-- Danh sách giáo viên & các ô ngày -->
+        <div id="teacher-list-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+        <!-- Các nút thao tác -->
+        <div class="action-grid">
+            <button class="btn btn-secondary" onclick="openManageErrorsModal()">⚙️ Sửa / Thêm Lỗi</button>
+            <button class="btn btn-success" onclick="exportToExcel()">📥 Tải File Excel</button>
+        </div>
+
+        <!-- DANH MỤC 19 LỖI QUY ĐỊNH CHO CÁC CÔ NẮM RÕ -->
+        <div class="rule-notice-box">
+            <div class="rule-notice-title">
+                📋 DANH MỤC 19 LỖI QUY ĐỊNH CỦA TRƯỜNG
+            </div>
+            <div class="rule-list" id="rule-list-display">
+                <!-- Render tự động 19 lỗi -->
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP ĐÁNH DẤU LỖI KHI BẤM VÀO Ô NGÀY -->
+    <div id="check-sheet" class="modal-overlay">
+        <div class="modal-sheet">
+            <div class="sheet-header">
+                <div>
+                    <h3 id="sheet-teacher-name">Tên cô</h3>
+                    <div id="sheet-date-text" style="font-size: 0.8rem; color: var(--text-sub);">Ngày --/--/----</div>
+                </div>
+                <button class="btn btn-secondary" style="padding: 4px 10px;" onclick="closeCheckSheet()">Đóng</button>
+            </div>
+            <div class="error-scroll-list" id="sheet-error-list"></div>
+            <div class="sheet-footer">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="clearCheckSheet()">Bỏ chọn</button>
+                <button class="btn btn-primary" style="flex: 2;" onclick="saveCheckSheet()">Lưu Lại</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP THÊM VÀ SỬA TÊN LỖI -->
+    <div id="manage-errors-modal" class="modal-overlay">
+        <div class="modal-sheet" style="max-height: 90vh;">
+            <div class="sheet-header">
+                <h3>Danh Mục Các Loại Lỗi</h3>
+                <button class="btn btn-secondary" style="padding: 4px 10px;" onclick="closeManageErrorsModal()">Đóng</button>
+            </div>
+            
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="new-error-input" placeholder="Nhập tên lỗi mới..." style="flex: 1;">
+                <button class="btn btn-primary" onclick="addNewError()">+ Thêm</button>
+            </div>
+
+            <div style="font-size: 0.8rem; color: var(--text-sub); margin-top: 4px;">Sửa trực tiếp tên lỗi bên dưới:</div>
+            <div class="error-scroll-list" id="manage-error-items-container"></div>
+
+            <div class="sheet-footer">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="closeManageErrorsModal()">Hủy</button>
+                <button class="btn btn-success" style="flex: 2;" onclick="saveManagedErrors()">Lưu Thay Đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. DANH SÁCH GIÁO VIÊN VÀ NHÂN VIÊN
+        const DEFAULT_TEACHERS = [
+            { id: "6602584339", name: "H' Uyên Adrơng" },
+            { id: "6635967016", name: "Phan Lê Hoài Linh" },
+            { id: "6602584353", name: "Hoàng Thị Thủy Ngân" },
+            { id: "6602511464", name: "Nguyễn Thu Nhật Quỳnh" },
+            { id: "6602924905", name: "Đinh Thuỵ Cẩm Tiên" },
+            { id: "6603076097", name: "Lê Thị Quỳnh Vân" },
+            { id: "66123493242", name: "Hoàng Thị Phi Yến" },
+            { id: "6606651460", name: "Trần Thị Ngọc Anh" },
+            { id: "7931964068", name: "Nguyễn Thị Hương" },
+            { id: "7408736502", name: "Cao Thị Lan" },
+            { id: "7930056319", name: "Hoàng Thị Tố Nga" },
+            { id: "6637452218", name: "Nguyễn Thị Ngọc" },
+            { id: "6636234415", name: "Trịnh Thị Phượng" },
+            { id: "66107380393", name: "Phan Thị Thu Thảo" }
+        ];
+
+        // 2. ĐẦY ĐỦ 19 MỤC LỖI QUY ĐỊNH
+        const DEFAULT_ERRORS = [
+            { id: "err_1", name: "Đi làm trễ (6h30-6h40)" },
+            { id: "err_2", name: "Giá kệ không gọn gàng" },
+            { id: "err_3", name: "Xem điện thoại không đúng giờ quy định" },
+            { id: "err_4", name: "Lấy đồ ăn không đúng giờ quy định" },
+            { id: "err_5", name: "Mặc đồng phục không đúng quy định" },
+            { id: "err_6", name: "Ăn sáng trước 6h50" },
+            { id: "err_7", name: "Lớp học không sạch sẽ gọn gàng" },
+            { id: "err_8", name: "Đón trẻ chia 2 cô trực rõ ràng" },
+            { id: "err_9", name: "Quên sữa, thuốc, đồ dùng của trẻ" },
+            { id: "err_10", name: "Cho trẻ đứng khi ăn" },
+            { id: "err_11", name: "Cất bàn sớm khi trẻ chưa ăn xong" },
+            { id: "err_12", name: "Xe để đúng nơi quy định" },
+            { id: "err_13", name: "Trước cửa lớp có rác" },
+            { id: "err_14", name: "Ra bài không đúng giờ quy định" },
+            { id: "err_15", name: "Cho trẻ xem TV không đúng giờ quy định" },
+            { id: "err_16", name: "Nhà bếp không gọn gàng sạch sẽ" },
+            { id: "err_17", name: "Tủ lạnh không sạch sẽ gọn gàng" },
+            { id: "err_18", name: "Chia phần ăn không chuẩn" },
+            { id: "err_19", name: "Sân sau trước không sạch sẽ" }
+        ];
+
+        let state = {
+            teachers: JSON.parse(JSON.stringify(DEFAULT_TEACHERS)),
+            errors: JSON.parse(JSON.stringify(DEFAULT_ERRORS)),
+            records: {} // "YYYY-MM": { "teacherId": { "YYYY-MM-DD": ["err_1", ...] } }
+        };
+
+        let activeTeacherId = null;
+        let activeDateKey = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStorage();
+            const now = new Date();
+            document.getElementById('select-month').value = now.getMonth() + 1;
+            document.getElementById('select-year').value = now.getFullYear();
+            renderApp();
+            renderRulesNotice();
+        });
+
+        function loadStorage() {
+            try {
+                const data = localStorage.getItem('mamnon_checkbook_v19');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.errors && parsed.errors.length > 0) state.errors = parsed.errors;
+                    if (parsed.records) state.records = parsed.records;
+                    if (parsed.teachers) state.teachers = parsed.teachers;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function saveStorage() {
+            try {
+                localStorage.setItem('mamnon_checkbook_v19', JSON.stringify(state));
+            } catch (e) {
+                alert("Bộ nhớ trình duyệt đầy!");
+            }
+        }
+
+        // Hiển thị danh mục 19 lỗi ở phía dưới cho các cô nắm
+        function renderRulesNotice() {
+            const listEl = document.getElementById('rule-list-display');
+            let html = '';
+            state.errors.forEach((err, idx) => {
+                html += `
+                    <div class="rule-item">
+                        <span class="rule-badge">${idx + 1}</span>
+                        <span>${escapeHtml(err.name)}</span>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        }
+
+        function renderApp() {
+            const month = parseInt(document.getElementById('select-month').value);
+            const year = parseInt(document.getElementById('select-year').value);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const monthStr = String(month).padStart(2, '0');
+            const monthKey = `${year}-${monthStr}`;
+
+            if (!state.records[monthKey]) state.records[monthKey] = {};
+            const monthData = state.records[monthKey];
+
+            const keyword = document.getElementById('search-box').value.trim().toLowerCase();
+            const filteredTeachers = state.teachers.filter(t => t.name.toLowerCase().includes(keyword));
+
+            const container = document.getElementById('teacher-list-container');
+            let html = '';
+            let totalSchoolErrors = 0;
+
+            filteredTeachers.forEach((t, idx) => {
+                const teacherErrors = monthData[t.id] || {};
+                let teacherTotal = 0;
+                let daysChipsHtml = '';
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dayStr = String(d).padStart(2, '0');
+                    const dKey = `${year}-${monthStr}-${dayStr}`;
+                    const count = (teacherErrors[dKey] || []).length;
+                    teacherTotal += count;
+
+                    const isSun = (new Date(year, month - 1, d).getDay() === 0);
+                    let chipClass = 'day-chip';
+                    if (isSun) chipClass += ' sunday';
+                    if (count > 0) chipClass += ' has-error';
+
+                    daysChipsHtml += `
+                        <div class="${chipClass}" onclick="openCheckSheet('${t.id}', '${dKey}')">
+                            <span class="d-num">N${d}</span>
+                            <span class="d-val">${count > 0 ? count : '-'}</span>
+                        </div>
+                    `;
+                }
+
+                totalSchoolErrors += teacherTotal;
+
+                html += `
+                    <div class="teacher-card">
+                        <div class="teacher-header">
+                            <div class="teacher-name">
+                                <span style="font-size:0.85rem; color:#94a3b8;">#${idx + 1}</span>
+                                <span>${escapeHtml(t.name)}</span>
+                            </div>
+                            <div class="badge-total">${teacherTotal} lỗi</div>
+                        </div>
+                        <div class="days-scroll">
+                            ${daysChipsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html || '<div style="text-align:center; padding:30px; color:#94a3b8;">Không có giáo viên phù hợp</div>';
+            document.getElementById('school-total-badge').innerText = totalSchoolErrors + ' lỗi';
+        }
+
+        function openCheckSheet(teacherId, dateKey) {
+            activeTeacherId = teacherId;
+            activeDateKey = dateKey;
+
+            const t = state.teachers.find(item => item.id === teacherId);
+            document.getElementById('sheet-teacher-name').innerText = t.name;
+            document.getElementById('sheet-date-text').innerText = `Ghi nhận lỗi ngày: ${dateKey}`;
+
+            const monthKey = dateKey.substring(0, 7);
+            const recorded = state.records[monthKey]?.[teacherId]?.[dateKey] || [];
+
+            const list = document.getElementById('sheet-error-list');
+            let html = '';
+            state.errors.forEach((err, idx) => {
+                const checked = recorded.includes(err.id) ? 'checked' : '';
+                html += `
+                    <label class="error-check-row">
+                        <input type="checkbox" value="${err.id}" ${checked}>
+                        <span><strong>${idx + 1}.</strong> ${escapeHtml(err.name)}</span>
+                    </label>
+                `;
+            });
+            list.innerHTML = html;
+            document.getElementById('check-sheet').style.display = 'flex';
+        }
+
+        function closeCheckSheet() {
+            document.getElementById('check-sheet').style.display = 'none';
+        }
+
+        function clearCheckSheet() {
+            document.querySelectorAll('#sheet-error-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+        }
+
+        function saveCheckSheet() {
+            if (!activeTeacherId || !activeDateKey) return;
+            const selected = [];
+            document.querySelectorAll('#sheet-error-list input[type="checkbox"]').forEach(cb => {
+                if (cb.checked) selected.push(cb.value);
+            });
+
+            const monthKey = activeDateKey.substring(0, 7);
+            if (!state.records[monthKey]) state.records[monthKey] = {};
+            if (!state.records[monthKey][activeTeacherId]) state.records[monthKey][activeTeacherId] = {};
+
+            if (selected.length > 0) {
+                state.records[monthKey][activeTeacherId][activeDateKey] = selected;
+            } else {
+                delete state.records[monthKey][activeTeacherId][activeDateKey];
+            }
+
+            saveStorage();
+            closeCheckSheet();
+            renderApp();
+        }
+
+        function openManageErrorsModal() {
+            const container = document.getElementById('manage-error-items-container');
+            let html = '';
+            state.errors.forEach((err, idx) => {
+                html += `
+                    <div class="manage-error-item">
+                        <span style="font-weight:bold; width: 24px;">${idx + 1}.</span>
+                        <input type="text" id="edit-err-${err.id}" value="${escapeHtml(err.name)}">
+                        <button class="btn btn-danger" style="padding: 7px 10px;" onclick="deleteError('${err.id}')">Xóa</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.getElementById('manage-errors-modal').style.display = 'flex';
+        }
+
+        function closeManageErrorsModal() {
+            document.getElementById('manage-errors-modal').style.display = 'none';
+        }
+
+        function addNewError() {
+            const input = document.getElementById('new-error-input');
+            const name = input.value.trim();
+            if (!name) {
+                alert("Vui lòng nhập tên lỗi!");
+                return;
+            }
+            const newId = 'err_' + Date.now();
+            state.errors.push({ id: newId, name: name });
+            input.value = '';
+            openManageErrorsModal();
+            renderRulesNotice();
+        }
+
+        function deleteError(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa loại lỗi này khỏi danh mục?")) {
+                state.errors = state.errors.filter(e => e.id !== id);
+                openManageErrorsModal();
+                renderRulesNotice();
+            }
+        }
+
+        function saveManagedErrors() {
+            state.errors.forEach(err => {
+                const input = document.getElementById(`edit-err-${err.id}`);
+                if (input && input.value.trim()) {
+                    err.name = input.value.trim();
+                }
+            });
+            saveStorage();
+            closeManageErrorsModal();
+            renderApp();
+            renderRulesNotice();
+            alert("Đã lưu danh mục lỗi thành công!");
+        }
+
+        function exportToExcel() {
+            const month = parseInt(document.getElementById('select-month').value);
+            const year = parseInt(document.getElementById('select-year').value);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const monthStr = String(month).padStart(2, '0');
+            const monthKey = `${year}-${monthStr}`;
+            const monthData = state.records[monthKey] || {};
+
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Header"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E3A8A" ss:Pattern="Solid"/></Style>
+  <Style ss:ID="CellData"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+  <Style ss:ID="TeacherName"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Font ss:Bold="1"/></Style>
+  <Style ss:ID="TotalCell"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#DC2626"/><Interior ss:Color="#FEE2E2" ss:Pattern="Solid"/></Style>
+ </Styles>
+ <Worksheet ss:Name="Tháng ${month}_${year}">
+  <Table>
+   <Row ss:Height="24">
+    <Cell ss:StyleID="Header"><Data ss:Type="String">STT</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Họ và tên</Data></Cell>`;
+
+            for (let d = 1; d <= daysInMonth; d++) xml += `<Cell ss:StyleID="Header"><Data ss:Type="String">N${d}</Data></Cell>`;
+            xml += `<Cell ss:StyleID="Header"><Data ss:Type="String">Tổng số lỗi</Data></Cell></Row>`;
+
+            let totalSchool = 0;
+            state.teachers.forEach((t, idx) => {
+                const tErrors = monthData[t.id] || {};
+                let countT = 0;
+                xml += `<Row ss:Height="20">
+                    <Cell ss:StyleID="CellData"><Data ss:Type="Number">${idx + 1}</Data></Cell>
+                    <Cell ss:StyleID="TeacherName"><Data ss:Type="String">${escapeHtml(t.name)}</Data></Cell>`;
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dayStr = String(d).padStart(2, '0');
+                    const c = (tErrors[`${year}-${monthStr}-${dayStr}`] || []).length;
+                    countT += c;
+                    xml += `<Cell ss:StyleID="CellData"><Data ss:Type="${c > 0 ? 'Number' : 'String'}">${c > 0 ? c : ''}</Data></Cell>`;
+                }
+                totalSchool += countT;
+                xml += `<Cell ss:StyleID="TotalCell"><Data ss:Type="Number">${countT}</Data></Cell></Row>`;
+            });
+
+            xml += `<Row ss:Height="22">
+                <Cell ss:StyleID="TotalCell"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="TotalCell"><Data ss:Type="String">TỔNG TOÀN TRƯỜNG</Data></Cell>`;
+            for (let d = 1; d <= daysInMonth; d++) xml += `<Cell ss:StyleID="TotalCell"><Data ss:Type="String"></Data></Cell>`;
+            xml += `<Cell ss:StyleID="TotalCell"><Data ss:Type="Number">${totalSchool}</Data></Cell></Row>
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+            const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Bang_Loi_Thang_${month}_${year}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+    </script>
+</body>
+</html>
